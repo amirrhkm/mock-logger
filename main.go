@@ -9,6 +9,26 @@ import (
 	"time"
 )
 
+func writeToFile(outputPath string, buffer string) error {
+	outputFile, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("error opening output file: %w", err)
+	}
+	defer outputFile.Close()
+
+	_, err = outputFile.WriteString(buffer + "\n")
+	if err != nil {
+		return fmt.Errorf("error writing to output file: %w", err)
+	}
+
+	err = outputFile.Sync()
+	if err != nil {
+		return fmt.Errorf("error flushing output file: %w", err)
+	}
+
+	return nil
+}
+
 func main() {
 	inputPath := flag.String("input", "hub-gw-info.log", "Path to input log file")
 	outputPath := flag.String("output", "hub-monitoring.log", "Path to output log file")
@@ -20,13 +40,6 @@ func main() {
 		return
 	}
 	defer inputFile.Close()
-
-	outputFile, err := os.OpenFile(*outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Error creating output log file:", err)
-		return
-	}
-	defer outputFile.Close()
 
 	timestampRegex := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}`)
 
@@ -41,15 +54,8 @@ func main() {
 			if buffer != "" {
 				time.Sleep(1 * time.Second)
 
-				_, err := outputFile.WriteString(buffer + "\n")
-				if err != nil {
-					fmt.Println("Error writing to output log file:", err)
-					return
-				}
-
-				err = outputFile.Sync()
-				if err != nil {
-					fmt.Println("Error flushing output log file:", err)
+				if err := writeToFile(*outputPath, buffer); err != nil {
+					fmt.Println(err)
 					return
 				}
 
@@ -65,15 +71,8 @@ func main() {
 	if buffer != "" {
 		time.Sleep(1 * time.Second)
 
-		_, err := outputFile.WriteString(buffer + "\n")
-		if err != nil {
-			fmt.Println("Error writing to output log file:", err)
-			return
-		}
-
-		err = outputFile.Sync()
-		if err != nil {
-			fmt.Println("Error flushing output log file:", err)
+		if err := writeToFile(*outputPath, buffer); err != nil {
+			fmt.Println(err)
 			return
 		}
 
