@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,14 +10,18 @@ import (
 )
 
 func main() {
-	inputFile, err := os.Open("hub-gw-info.log")
+	inputPath := flag.String("input", "hub-gw-info.log", "Path to input log file")
+	outputPath := flag.String("output", "hub-monitoring.log", "Path to output log file")
+	flag.Parse()
+
+	inputFile, err := os.Open(*inputPath)
 	if err != nil {
 		fmt.Println("Error opening input log file:", err)
 		return
 	}
 	defer inputFile.Close()
 
-	outputFile, err := os.Create("hub-monitoring.log")
+	outputFile, err := os.OpenFile(*outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error creating output log file:", err)
 		return
